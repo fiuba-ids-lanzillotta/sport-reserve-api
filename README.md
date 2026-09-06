@@ -30,6 +30,36 @@ mysql -u root -p < db/ddl.sql
 mysql -u root -p < db/dml.sql
 ```
 
+### Levantar MySQL con Docker Compose
+
+Como alternativa, puedes levantar una base de datos MySQL con los scripts de inicialización automáticos:
+
+```bash
+docker-compose up -d
+```
+
+Esto hará lo siguiente:
+
+- Descargará la imagen `mysql:8` si no está disponible localmente.
+- Creará la base de datos `sport_reserve`.
+- Ejecutará `db/ddl.sql` para crear el esquema.
+- Ejecutará `db/dml.sql` para popular las tablas con datos iniciales.
+- Publicará el puerto `3306` para que la API pueda conectarse desde `localhost`.
+
+La base de datos conservará sus datos entre reinicios gracias al volumen `mysql_data`.
+
+Para detenerla:
+
+```bash
+docker-compose down
+```
+
+Para detenerla y eliminar los datos persistentes:
+
+```bash
+docker-compose down -v
+```
+
 ### Configuración de conexión
 
 Por defecto la aplicación se conecta a una instancia local de MySQL:

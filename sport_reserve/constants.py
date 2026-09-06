@@ -1,3 +1,5 @@
+import os
+
 FORMATO_FECHA = '%Y-%m-%d'
 FORMATO_HORA = '%H:%M:%S'
 
@@ -22,12 +24,16 @@ DEFAULT_LIMIT = '10'
 BASE_URL = '/sport_reserve_api'
 
 # Configuración de la base de datos (conexión local por defecto)
-DB_HOST = 'localhost'
-DB_PORT = 3306
-DB_USER = 'root'
-DB_PASSWORD = ''
-DB_NAME = 'sport_reserve'
-DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+# Se puede sobreescribir mediante variables de entorno para Docker Compose.
+DB_HOST = os.environ.get('DB_HOST', 'localhost')
+DB_PORT = int(os.environ.get('DB_PORT', 3306))
+DB_USER = os.environ.get('DB_USER', 'root')
+DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
+DB_NAME = os.environ.get('DB_NAME', 'sport_reserve')
+DB_URL = os.environ.get(
+    'DB_URL',
+    f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+)
 
 # Códigos de error
 ERROR_CODE_INVALID_BODY = 'invalid.body'
