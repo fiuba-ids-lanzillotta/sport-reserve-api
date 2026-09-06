@@ -1,0 +1,47 @@
+services:
+  db:
+    image: mysql:8
+    container_name: sport-reserve-db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: sport_reserve
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      MYSQL_ALLOW_EMPTY_PASSWORD: ${MYSQL_ALLOW_EMPTY_PASSWORD:-yes}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./db/ddl.sql:/docker-entrypoint-initdb.d/01_ddl.sql:ro
+      - ./db/dml.sql:/docker-entrypoint-initdb.d/02_dml.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "mysql -uroot --password=\"$${MYSQL_ROOT_PASSWORD}\" -D sport_reserve -e \"SELECT 1 FROM deportes LIMIT 1\" || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  app:
+    image: python:3.13-slim
+    container_name: sport-reserve-app
+    restart: unless-stopped
+    environment:
+      DB_HOST: db
+      DB_PORT: 3306
+      DB_USER: root
+      DB_PASSWORD: ${MYSQL_ROOT_PASSWORD:-}
+      DB_NAME: sport_reserve
+      FLASK_APP: app.py
+    ports:
+      - "5000:5000"
+    volumes:
+      - .:/app
+    working_dir: /app
+    depends_on:
+      db:
+        condition: service_healthy
+    command: >
+      sh -c "pip install --no-cache-dir -r requirements.txt &&
+             flask --app app run --host=0.0.0.0 --port=5000"
+
+volumes:
+  mysql_data:
