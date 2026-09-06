@@ -68,6 +68,13 @@ La información se almacena en archivos CSV dentro de la carpeta `data/`:
 - `data/socios.csv`
 - `data/reservas.csv`
 
+## 🧪 Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
 ## 🌐 Acceso a la API
 
 Una vez ejecutada la aplicación:
