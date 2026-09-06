@@ -124,6 +124,13 @@ pip install -r requirements.txt
 python app.py
 ```
 
+## 🧪 Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
+```
+
 ## 🌐 Acceso a la API
 
 Una vez ejecutada la aplicación:
