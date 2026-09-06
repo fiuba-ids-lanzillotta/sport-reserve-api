@@ -103,8 +103,9 @@ Se implementa con `_limit` y `_offset`. La respuesta incluye navegación HATEOAS
 
 - Lenguaje: Python
 - Framework: Flask
-- Persistencia: MySQL (rama con base de datos) o CSV (rama base)
+- Persistencia: archivos CSV en la carpeta `data/`
 - Buenas prácticas: separación de capas, validación de datos, manejo de errores
+- Rama base sin extensiones opcionales
 
 ---
 

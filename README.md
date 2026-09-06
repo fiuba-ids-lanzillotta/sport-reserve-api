@@ -2,51 +2,14 @@
 
 API de reservas de canchas de club deportivo construida con Flask.
 
-Esta rama (`feature/db_implementation`) contiene la versión con persistencia en MySQL, sin las extensiones opcionales de bloqueos ni reservas recurrentes.
+Esta rama (`main`) contiene la versión base con persistencia en archivos CSV (sin MySQL y sin extensiones opcionales).
 
 ## 📋 Requerimientos de Software
 
-### Linux / macOS
-- Sistema operativo Unix-based
-- **MySQL 8+** instalado y en ejecución
-- Conexión a internet para descargar dependencias
-
-### Windows
 - **Python 3.7+** instalado y agregado al PATH ([descargar](https://www.python.org/downloads/))
-- **MySQL 8+** instalado y en ejecución ([descargar](https://dev.mysql.com/downloads/mysql/))
 - Conexión a internet para descargar dependencias
 
-## 🗄️ Base de Datos
-
-La aplicación requiere una base de datos MySQL activa. Antes de levantar la aplicación, ejecutar los scripts SQL en el siguiente orden:
-
-### 1. Crear el esquema (DDL)
-
-```bash
-mysql -u root -p < db/ddl.sql
-```
-
-### 2. Cargar los datos iniciales (DML)
-
-```bash
-mysql -u root -p < db/dml.sql
-```
-
-### Configuración de conexión
-
-Por defecto la aplicación se conecta a una instancia local de MySQL:
-
-| Parámetro    | Valor por defecto |
-|--------------|-------------------|
-| Host         | `localhost`       |
-| Puerto       | `3306`            |
-| Usuario      | `root`            |
-| Contraseña   | *(vacía)*        |
-| Base de datos| `sport_reserve`   |
-
-Para cambiar la configuración, editar las constantes en `sport_reserve/constants.py`.
-
-## 🚀 Instalación y Ejecución
+##  Instalación y Ejecución
 
 ### Linux / macOS
 
@@ -96,6 +59,15 @@ pip install -r requirements.txt
 python app.py
 ```
 
+## 🗂️ Persistencia
+
+La información se almacena en archivos CSV dentro de la carpeta `data/`:
+
+- `data/deportes.csv`
+- `data/canchas.csv`
+- `data/socios.csv`
+- `data/reservas.csv`
+
 ## 🌐 Acceso a la API
 
 Una vez ejecutada la aplicación:
@@ -144,8 +116,6 @@ Una vez ejecutada la aplicación:
 - **Flask 2.3.2** - Framework web
 - **Werkzeug 2.3.6** - Utilidades WSGI
 - **requests 2.31.0** - Solicitudes HTTP
-- **SQLAlchemy 2.0.36** - Toolkit SQL (queries raw)
-- **PyMySQL 1.1.1** - Driver MySQL
 
 ## 📝 Estructura del Proyecto
 
@@ -157,9 +127,11 @@ sport-reserve-api/
 ├── setup_virtualenv.bat
 ├── setup_pipenv.sh
 ├── setup_pipenv.bat
-├── db/
-│   ├── ddl.sql
-│   └── dml.sql
+├── data/
+│   ├── deportes.csv
+│   ├── canchas.csv
+│   ├── socios.csv
+│   └── reservas.csv
 ├── sport_reserve/
 │   ├── constants.py
 │   ├── db.py

@@ -13,21 +13,19 @@ MIN_LIMIT = 1
 MAX_LIMIT = 100
 MIN_ID = 1
 MIN_PRECIO_HORA = 1
-MIN_CANTIDAD_SEMANAS = 2
-MAX_CANTIDAD_SEMANAS = 12
+
 DEFAULT_OFFSET = '0'
 DEFAULT_LIMIT = '10'
 
 # URL base de la API
 BASE_URL = '/sport_reserve_api'
 
-# Configuración de la base de datos (conexión local por defecto)
-DB_HOST = 'localhost'
-DB_PORT = 3306
-DB_USER = 'root'
-DB_PASSWORD = ''
-DB_NAME = 'sport_reserve'
-DB_URL = f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+# Rutas de archivos CSV para la persistencia en la rama main
+RUTA_DATOS = 'data'
+ARCHIVO_DEPORTES  = f'{RUTA_DATOS}/deportes.csv'
+ARCHIVO_CANCHAS   = f'{RUTA_DATOS}/canchas.csv'
+ARCHIVO_SOCIOS    = f'{RUTA_DATOS}/socios.csv'
+ARCHIVO_RESERVAS  = f'{RUTA_DATOS}/reservas.csv'
 
 # Códigos de error
 ERROR_CODE_INVALID_BODY = 'invalid.body'
@@ -50,6 +48,3 @@ ERROR_CODE_RESERVA_CONFLICT = 'reserva.conflict'
 ERROR_CODE_RESERVA_ESTADO_INVALIDO = 'reserva.estado.invalido'
 ERROR_CODE_RESERVA_ESTADO_TRANSICION = 'reserva.estado.transicion.invalida'
 ERROR_CODE_RESERVA_ESTADO_TEMPORAL = 'reserva.estado.temporal.invalido'
-
-ERROR_CODE_BLOQUEO_NOT_FOUND = 'bloqueo.not.found'
-ERROR_CODE_BLOQUEO_CONFLICT = 'bloqueo.conflict'

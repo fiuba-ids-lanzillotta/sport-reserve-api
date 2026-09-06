@@ -1,0 +1,4 @@
+ID, NOMBRE, EMAIL, ACTIVO
+1, Juan Pérez, juan.perez@example.com, true
+2, María García, maria.garcia@example.com, true
+3, Carlos López, carlos.lopez@example.com, false

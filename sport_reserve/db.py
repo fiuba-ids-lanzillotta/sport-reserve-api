@@ -1,375 +1,377 @@
-from sqlalchemy import create_engine, text
-from .constants import DB_URL
+from datetime import datetime
 
-# Motor de conexión compartido por toda la aplicación.
-motor = create_engine(DB_URL)
+from .constants import (
+    ARCHIVO_DEPORTES,
+    ARCHIVO_CANCHAS,
+    ARCHIVO_SOCIOS,
+    ARCHIVO_RESERVAS
+)
+from .utils import (
+    cargar_csv,
+    guardar_csv,
+    parsear_fecha_hora,
+    formatear_fecha_hora
+)
+
+ENCABEZADOS_CANCHAS  = ['ID', 'NOMBRE', 'ID_DEPORTE', 'PRECIO_HORA', 'TECHADA', 'ACTIVA']
+ENCABEZADOS_SOCIOS   = ['ID', 'NOMBRE', 'EMAIL', 'ACTIVO']
+ENCABEZADOS_RESERVAS = ['ID', 'ID_SOCIO', 'ID_CANCHA', 'FECHA_HORA_INICIO', 'FECHA_HORA_FIN', 'ESTADO', 'PRECIO_HORA', 'PRECIO_TOTAL']
+ENCABEZADOS_DEPORTES = ['ID', 'NOMBRE']
 
 
-def fila_a_dict(fila) -> dict:
-    """Convierte una fila del resultado de una query en un diccionario."""
-    return dict(fila._mapping)
+def _normalizar_booleano_campos(campos: dict, columnas_booleanas: set) -> dict:
+    """Convierte valores 0/1 o strings en booleanos para columnas booleanas."""
+    normalizado = dict(campos)
+
+    for columna in columnas_booleanas:
+        if columna in normalizado:
+            valor = normalizado[columna]
+            if isinstance(valor, bool):
+                normalizado[columna] = valor
+            elif isinstance(valor, int):
+                normalizado[columna] = valor == 1
+            elif isinstance(valor, str):
+                normalizado[columna] = valor.lower() == 'true'
+
+    return normalizado
 
 
-def ejecutar_consulta(sql: str, parametros: dict = None) -> list[dict]:
-    """Ejecuta una SELECT y devuelve todas las filas como lista de dicts."""
-    with motor.connect() as conexion:
-        resultado = conexion.execute(text(sql), parametros or {})
-        return [fila_a_dict(fila) for fila in resultado]
-
-
-def ejecutar_mutacion(sql: str, parametros: dict = None) -> int:
-    """
-    Ejecuta un INSERT, UPDATE o DELETE y hace commit.
-    Retorna el id generado en caso de INSERT, o 0 en otro caso.
-    """
-    with motor.begin() as conexion:
-        resultado = conexion.execute(text(sql), parametros or {})
-        return resultado.lastrowid or 0
+def _nuevo_id(registros: list[dict]) -> int:
+    if not registros:
+        return 1
+    return max(r['id'] for r in registros) + 1
 
 
 # ---------------------------------------------------------------
-# Queries de deportes
+# Persistencia de deportes
 # ---------------------------------------------------------------
 
 def obtener_todos_los_deportes() -> list[dict]:
-    return ejecutar_consulta('SELECT id, nombre FROM deportes ORDER BY id')
+    return cargar_csv(ARCHIVO_DEPORTES)
 
 
 def obtener_deporte_por_id(id_deporte: int) -> dict:
-    filas = ejecutar_consulta('SELECT id, nombre FROM deportes WHERE id = :id', {'id': id_deporte})
-    return filas[0] if filas else {}
+    deportes = obtener_todos_los_deportes()
+
+    for deporte in deportes:
+        if deporte['id'] == id_deporte:
+            return deporte
+
+    return {}
 
 
 # ---------------------------------------------------------------
-# Queries de canchas
+# Persistencia de canchas
 # ---------------------------------------------------------------
 
-def _where_canchas(id_deporte, nombre, techada, activa):
-    where = []
-    params = {}
+def _cancha_coincide(cancha: dict, id_deporte, nombre, techada, activa) -> bool:
+    if id_deporte is not None and cancha['id_deporte'] != id_deporte:
+        return False
 
-    if id_deporte is not None:
-        where.append('id_deporte = :id_deporte')
-        params['id_deporte'] = id_deporte
+    if nombre is not None and nombre.lower() not in cancha['nombre'].lower():
+        return False
 
-    if nombre is not None:
-        where.append('LOWER(nombre) LIKE LOWER(:nombre)')
-        params['nombre'] = f'%{nombre}%'
+    if techada is not None and cancha['techada'] != techada:
+        return False
 
-    if techada is not None:
-        where.append('techada = :techada')
-        params['techada'] = 1 if techada else 0
+    if activa is not None and cancha['activa'] != activa:
+        return False
 
-    if activa is not None:
-        where.append('activa = :activa')
-        params['activa'] = 1 if activa else 0
-
-    return where, params
+    return True
 
 
 def obtener_canchas(id_deporte=None, nombre=None, techada=None, activa=None, limit=10, offset=0) -> tuple[list[dict], int]:
-    where, params = _where_canchas(id_deporte, nombre, techada, activa)
-    sql_where = 'WHERE ' + ' AND '.join(where) if where else ''
+    canchas = cargar_csv(ARCHIVO_CANCHAS)
+    filtradas = [
+        c for c in canchas
+        if _cancha_coincide(c, id_deporte, nombre, techada, activa)
+    ]
 
-    sql_total = f'SELECT COUNT(*) AS total FROM canchas {sql_where}'
-    total = ejecutar_consulta(sql_total, params)[0]['total']
-
-    sql = f'SELECT id, nombre, id_deporte, precio_hora, techada, activa FROM canchas {sql_where} ORDER BY id LIMIT :limit OFFSET :offset'
-    params['limit'] = limit
-    params['offset'] = offset
-
-    filas = ejecutar_consulta(sql, params)
-    return filas, total
+    total = len(filtradas)
+    return filtradas[offset:offset + limit], total
 
 
 def obtener_cancha_por_id(id_cancha: int) -> dict:
-    filas = ejecutar_consulta(
-        'SELECT id, nombre, id_deporte, precio_hora, techada, activa FROM canchas WHERE id = :id',
-        {'id': id_cancha}
-    )
-    return filas[0] if filas else {}
+    canchas = cargar_csv(ARCHIVO_CANCHAS)
+
+    for cancha in canchas:
+        if cancha['id'] == id_cancha:
+            return cancha
+
+    return {}
 
 
 def insertar_cancha(nombre: str, id_deporte: int, precio_hora: int, techada: bool, activa: bool) -> int:
-    sql = """
-        INSERT INTO canchas (nombre, id_deporte, precio_hora, techada, activa)
-        VALUES (:nombre, :id_deporte, :precio_hora, :techada, :activa)
-    """
-    return ejecutar_mutacion(sql, {
+    canchas = cargar_csv(ARCHIVO_CANCHAS)
+    nuevo_id = _nuevo_id(canchas)
+
+    canchas.append({
+        'id': nuevo_id,
         'nombre': nombre,
         'id_deporte': id_deporte,
         'precio_hora': precio_hora,
-        'techada': 1 if techada else 0,
-        'activa': 1 if activa else 0
+        'techada': techada,
+        'activa': activa
     })
+
+    guardar_csv(ARCHIVO_CANCHAS, canchas, ENCABEZADOS_CANCHAS)
+    return nuevo_id
 
 
 def actualizar_cancha_parcial(id_cancha: int, campos: dict) -> None:
-    set_clause = ', '.join(f'{k} = :{k}' for k in campos)
-    sql = f'UPDATE canchas SET {set_clause} WHERE id = :id'
+    canchas = cargar_csv(ARCHIVO_CANCHAS)
 
-    parametros = dict(campos)
-    parametros['id'] = id_cancha
+    for cancha in canchas:
+        if cancha['id'] == id_cancha:
+            campos_norm = _normalizar_booleano_campos(campos, {'techada', 'activa'})
+            cancha.update(campos_norm)
+            break
 
-    ejecutar_mutacion(sql, parametros)
+    guardar_csv(ARCHIVO_CANCHAS, canchas, ENCABEZADOS_CANCHAS)
 
 
 def eliminar_cancha(id_cancha: int) -> bool:
-    filas = ejecutar_consulta('SELECT id FROM canchas WHERE id = :id', {'id': id_cancha})
+    canchas = cargar_csv(ARCHIVO_CANCHAS)
+    longitud_original = len(canchas)
+    canchas = [c for c in canchas if c['id'] != id_cancha]
 
-    if not filas:
+    if len(canchas) == longitud_original:
         return False
 
-    ejecutar_mutacion('DELETE FROM canchas WHERE id = :id', {'id': id_cancha})
+    guardar_csv(ARCHIVO_CANCHAS, canchas, ENCABEZADOS_CANCHAS)
     return True
 
 
 def contar_reservas_por_cancha(id_cancha: int) -> int:
-    sql = 'SELECT COUNT(*) AS total FROM reservas WHERE id_cancha = :id_cancha'
-    filas = ejecutar_consulta(sql, {'id_cancha': id_cancha})
-    return filas[0]['total']
+    reservas = cargar_csv(ARCHIVO_RESERVAS)
+    return len([r for r in reservas if r['id_cancha'] == id_cancha])
+
+
+def _reservas_superpuestas(id_cancha: int, inicio: datetime, fin: datetime, excluir_id=None) -> list[dict]:
+    reservas = cargar_csv(ARCHIVO_RESERVAS)
+    superpuestas = []
+
+    for reserva in reservas:
+        if reserva['id_cancha'] != id_cancha:
+            continue
+
+        if reserva['estado'] == 'cancelada':
+            continue
+
+        if excluir_id is not None and reserva['id'] == excluir_id:
+            continue
+
+        r_inicio = parsear_fecha_hora(reserva['fecha_hora_inicio'])
+        r_fin = parsear_fecha_hora(reserva['fecha_hora_fin'])
+
+        if r_inicio < fin and r_fin > inicio:
+            superpuestas.append(reserva)
+
+    return superpuestas
 
 
 def obtener_canchas_disponibles(fecha: str, hora_inicio: str, hora_fin: str, id_deporte=None, techada=None, limit=10, offset=0) -> tuple[list[dict], int]:
-    where = ['c.activa = 1']
-    params = {'fecha': fecha, 'hora_inicio': hora_inicio, 'hora_fin': hora_fin}
+    inicio = datetime.strptime(f"{fecha} {hora_inicio}", '%Y-%m-%d %H:%M:%S')
+    fin = datetime.strptime(f"{fecha} {hora_fin}", '%Y-%m-%d %H:%M:%S')
 
-    if id_deporte is not None:
-        where.append('c.id_deporte = :id_deporte')
-        params['id_deporte'] = id_deporte
+    canchas = cargar_csv(ARCHIVO_CANCHAS)
+    disponibles = []
 
-    if techada is not None:
-        where.append('c.techada = :techada')
-        params['techada'] = 1 if techada else 0
+    for cancha in canchas:
+        if not cancha['activa']:
+            continue
 
-    sql_where = ' AND '.join(where)
+        if id_deporte is not None and cancha['id_deporte'] != id_deporte:
+            continue
 
-    sql_total = f"""
-        SELECT COUNT(*) AS total
-        FROM canchas c
-        WHERE {sql_where}
-          AND NOT EXISTS (
-              SELECT 1 FROM reservas r
-              WHERE r.id_cancha = c.id
-                AND r.estado != 'cancelada'
-                AND r.fecha_hora_inicio < :fecha_hora_fin
-                AND r.fecha_hora_fin > :fecha_hora_inicio
-          )
-    """
+        if techada is not None and cancha['techada'] != techada:
+            continue
 
-    parametros_total = {
-        'fecha_hora_inicio': f'{fecha} {hora_inicio}',
-        'fecha_hora_fin': f'{fecha} {hora_fin}'
-    }
-    if id_deporte is not None:
-        parametros_total['id_deporte'] = id_deporte
-    if techada is not None:
-        parametros_total['techada'] = 1 if techada else 0
+        if not _reservas_superpuestas(cancha['id'], inicio, fin):
+            disponibles.append(cancha)
 
-    total = ejecutar_consulta(sql_total, parametros_total)[0]['total']
-
-    sql = f"""
-        SELECT c.id, c.nombre, c.id_deporte, c.precio_hora, c.techada, c.activa
-        FROM canchas c
-        WHERE {sql_where}
-          AND NOT EXISTS (
-              SELECT 1 FROM reservas r
-              WHERE r.id_cancha = c.id
-                AND r.estado != 'cancelada'
-                AND r.fecha_hora_inicio < :fecha_hora_fin
-                AND r.fecha_hora_fin > :fecha_hora_inicio
-          )
-        ORDER BY c.id
-        LIMIT :limit OFFSET :offset
-    """
-
-    params['limit'] = limit
-    params['offset'] = offset
-    params['fecha_hora_inicio'] = f'{fecha} {hora_inicio}'
-    params['fecha_hora_fin'] = f'{fecha} {hora_fin}'
-
-    filas = ejecutar_consulta(sql, params)
-    return filas, total
+    total = len(disponibles)
+    return disponibles[offset:offset + limit], total
 
 
 # ---------------------------------------------------------------
-# Queries de socios
+# Persistencia de socios
 # ---------------------------------------------------------------
 
-def _where_socios(nombre, activo):
-    where = []
-    params = {}
+def _socio_coincide(socio: dict, nombre, activo) -> bool:
+    if nombre is not None and nombre.lower() not in socio['nombre'].lower():
+        return False
 
-    if nombre is not None:
-        where.append('LOWER(nombre) LIKE LOWER(:nombre)')
-        params['nombre'] = f'%{nombre}%'
+    if activo is not None and socio['activo'] != activo:
+        return False
 
-    if activo is not None:
-        where.append('activo = :activo')
-        params['activo'] = 1 if activo else 0
-
-    return where, params
+    return True
 
 
 def obtener_todos_los_socios(nombre=None, activo=None, limit=10, offset=0) -> tuple[list[dict], int]:
-    where, params = _where_socios(nombre, activo)
-    sql_where = 'WHERE ' + ' AND '.join(where) if where else ''
+    socios = cargar_csv(ARCHIVO_SOCIOS)
+    filtrados = [
+        s for s in socios
+        if _socio_coincide(s, nombre, activo)
+    ]
 
-    sql_total = f'SELECT COUNT(*) AS total FROM socios {sql_where}'
-    total = ejecutar_consulta(sql_total, params)[0]['total']
-
-    sql = f'SELECT id, nombre, email, activo FROM socios {sql_where} ORDER BY id LIMIT :limit OFFSET :offset'
-    params['limit'] = limit
-    params['offset'] = offset
-
-    filas = ejecutar_consulta(sql, params)
-    return filas, total
+    total = len(filtrados)
+    return filtrados[offset:offset + limit], total
 
 
 def obtener_socio_por_id(id_socio: int) -> dict:
-    filas = ejecutar_consulta('SELECT id, nombre, email, activo FROM socios WHERE id = :id', {'id': id_socio})
-    return filas[0] if filas else {}
+    socios = cargar_csv(ARCHIVO_SOCIOS)
+
+    for socio in socios:
+        if socio['id'] == id_socio:
+            return socio
+
+    return {}
 
 
 def existe_socio_distinto(email: str, excluir_id: int) -> bool:
-    sql = 'SELECT id FROM socios WHERE email = :email AND id != :excluir_id LIMIT 1'
-    filas = ejecutar_consulta(sql, {'email': email, 'excluir_id': excluir_id})
-    return len(filas) > 0
+    socios = cargar_csv(ARCHIVO_SOCIOS)
+
+    for socio in socios:
+        if socio['email'].lower() == email.lower() and socio['id'] != excluir_id:
+            return True
+
+    return False
 
 
 def insertar_socio(nombre: str, email: str) -> int:
-    sql = 'INSERT INTO socios (nombre, email) VALUES (:nombre, :email)'
-    return ejecutar_mutacion(sql, {'nombre': nombre, 'email': email})
+    socios = cargar_csv(ARCHIVO_SOCIOS)
+    nuevo_id = _nuevo_id(socios)
+
+    socios.append({
+        'id': nuevo_id,
+        'nombre': nombre,
+        'email': email,
+        'activo': True
+    })
+
+    guardar_csv(ARCHIVO_SOCIOS, socios, ENCABEZADOS_SOCIOS)
+    return nuevo_id
 
 
 def actualizar_socio_parcial(id_socio: int, campos: dict) -> None:
-    set_clause = ', '.join(f'{k} = :{k}' for k in campos)
-    sql = f'UPDATE socios SET {set_clause} WHERE id = :id'
+    socios = cargar_csv(ARCHIVO_SOCIOS)
 
-    parametros = dict(campos)
-    parametros['id'] = id_socio
+    for socio in socios:
+        if socio['id'] == id_socio:
+            campos_norm = _normalizar_booleano_campos(campos, {'activo'})
+            socio.update(campos_norm)
+            break
 
-    ejecutar_mutacion(sql, parametros)
+    guardar_csv(ARCHIVO_SOCIOS, socios, ENCABEZADOS_SOCIOS)
 
 
 # ---------------------------------------------------------------
-# Queries de reservas
+# Persistencia de reservas
 # ---------------------------------------------------------------
 
-def _where_reservas(id_cancha, id_socio, estado, fecha_desde, fecha_hasta):
-    where = []
-    params = {}
+def _reserva_coincide(reserva: dict, id_cancha, id_socio, estado, fecha_desde, fecha_hasta) -> bool:
+    if id_cancha is not None and reserva['id_cancha'] != id_cancha:
+        return False
 
-    if id_cancha is not None:
-        where.append('r.id_cancha = :id_cancha')
-        params['id_cancha'] = id_cancha
+    if id_socio is not None and reserva['id_socio'] != id_socio:
+        return False
 
-    if id_socio is not None:
-        where.append('r.id_socio = :id_socio')
-        params['id_socio'] = id_socio
+    if estado is not None and reserva['estado'] != estado:
+        return False
 
-    if estado is not None:
-        where.append('r.estado = :estado')
-        params['estado'] = estado
+    if fecha_desde is not None or fecha_hasta is not None:
+        fecha_inicio = parsear_fecha_hora(reserva['fecha_hora_inicio']).date().isoformat()
 
-    if fecha_desde is not None:
-        where.append('DATE(r.fecha_hora_inicio) >= :fecha_desde')
-        params['fecha_desde'] = fecha_desde
+        if fecha_desde is not None and fecha_inicio < fecha_desde:
+            return False
 
-    if fecha_hasta is not None:
-        where.append('DATE(r.fecha_hora_inicio) <= :fecha_hasta')
-        params['fecha_hasta'] = fecha_hasta
+        if fecha_hasta is not None and fecha_inicio > fecha_hasta:
+            return False
 
-    return where, params
+    return True
 
 
 def obtener_todas_las_reservas(id_cancha=None, id_socio=None, estado=None, fecha_desde=None, fecha_hasta=None, limit=10, offset=0) -> tuple[list[dict], int]:
-    where, params = _where_reservas(id_cancha, id_socio, estado, fecha_desde, fecha_hasta)
-    sql_where = 'WHERE ' + ' AND '.join(where) if where else ''
+    reservas = cargar_csv(ARCHIVO_RESERVAS)
+    filtradas = [
+        r for r in reservas
+        if _reserva_coincide(r, id_cancha, id_socio, estado, fecha_desde, fecha_hasta)
+    ]
 
-    sql_total = f'SELECT COUNT(*) AS total FROM reservas r {sql_where}'
-    total = ejecutar_consulta(sql_total, params)[0]['total']
-
-    sql = f"""
-        SELECT id, id_socio, id_cancha, fecha_hora_inicio, fecha_hora_fin, estado, precio_hora, precio_total
-        FROM reservas r
-        {sql_where}
-        ORDER BY r.id
-        LIMIT :limit OFFSET :offset
-    """
-    params['limit'] = limit
-    params['offset'] = offset
-
-    filas = ejecutar_consulta(sql, params)
-    return filas, total
+    total = len(filtradas)
+    return filtradas[offset:offset + limit], total
 
 
 def obtener_reserva_por_id(id_reserva: int) -> dict:
-    filas = ejecutar_consulta(
-        'SELECT id, id_socio, id_cancha, fecha_hora_inicio, fecha_hora_fin, estado, precio_hora, precio_total FROM reservas WHERE id = :id',
-        {'id': id_reserva}
-    )
-    return filas[0] if filas else {}
+    reservas = cargar_csv(ARCHIVO_RESERVAS)
+
+    for reserva in reservas:
+        if reserva['id'] == id_reserva:
+            return reserva
+
+    return {}
 
 
 def insertar_reserva(id_socio: int, id_cancha: int, fecha_hora_inicio, fecha_hora_fin, estado: str, precio_hora: int, precio_total: int) -> int:
-    sql = """
-        INSERT INTO reservas (id_socio, id_cancha, fecha_hora_inicio, fecha_hora_fin, estado, precio_hora, precio_total)
-        VALUES (:id_socio, :id_cancha, :fecha_hora_inicio, :fecha_hora_fin, :estado, :precio_hora, :precio_total)
-    """
-    return ejecutar_mutacion(sql, {
+    reservas = cargar_csv(ARCHIVO_RESERVAS)
+    nuevo_id = _nuevo_id(reservas)
+
+    reservas.append({
+        'id': nuevo_id,
         'id_socio': id_socio,
         'id_cancha': id_cancha,
-        'fecha_hora_inicio': fecha_hora_inicio,
-        'fecha_hora_fin': fecha_hora_fin,
+        'fecha_hora_inicio': formatear_fecha_hora(fecha_hora_inicio),
+        'fecha_hora_fin': formatear_fecha_hora(fecha_hora_fin),
         'estado': estado,
         'precio_hora': precio_hora,
         'precio_total': precio_total
     })
 
+    guardar_csv(ARCHIVO_RESERVAS, reservas, ENCABEZADOS_RESERVAS)
+    return nuevo_id
+
 
 def insertar_reservas_batch(reservas: list[dict]) -> list[int]:
-    """Inserta un lote de reservas dentro de una transacción y retorna sus ids."""
-    sql = """
-        INSERT INTO reservas (id_socio, id_cancha, fecha_hora_inicio, fecha_hora_fin, estado, precio_hora, precio_total)
-        VALUES (:id_socio, :id_cancha, :fecha_hora_inicio, :fecha_hora_fin, :estado, :precio_hora, :precio_total)
-    """
-
+    """Inserta un lote de reservas y retorna sus ids."""
     ids = []
 
-    with motor.begin() as conexion:
-        for reserva in reservas:
-            resultado = conexion.execute(text(sql), reserva)
-            ids.append(resultado.lastrowid or 0)
+    for reserva in reservas:
+        nuevo_id = insertar_reserva(
+            reserva['id_socio'],
+            reserva['id_cancha'],
+            reserva['fecha_hora_inicio'],
+            reserva['fecha_hora_fin'],
+            reserva['estado'],
+            reserva['precio_hora'],
+            reserva['precio_total']
+        )
+        ids.append(nuevo_id)
 
     return ids
 
 
 def actualizar_estado_reserva(id_reserva: int, estado: str) -> None:
-    sql = 'UPDATE reservas SET estado = :estado WHERE id = :id'
-    ejecutar_mutacion(sql, {'estado': estado, 'id': id_reserva})
+    reservas = cargar_csv(ARCHIVO_RESERVAS)
+
+    for reserva in reservas:
+        if reserva['id'] == id_reserva:
+            reserva['estado'] = estado
+            break
+
+    guardar_csv(ARCHIVO_RESERVAS, reservas, ENCABEZADOS_RESERVAS)
 
 
 def existe_reserva_superpuesta(id_cancha: int, fecha_hora_inicio, fecha_hora_fin, excluir_id=None) -> bool:
-    sql = """
-        SELECT 1 FROM reservas
-        WHERE id_cancha = :id_cancha
-          AND estado != 'cancelada'
-          AND fecha_hora_inicio < :fecha_hora_fin
-          AND fecha_hora_fin > :fecha_hora_inicio
-    """
-    params = {
-        'id_cancha': id_cancha,
-        'fecha_hora_inicio': fecha_hora_inicio,
-        'fecha_hora_fin': fecha_hora_fin
-    }
+    inicio = fecha_hora_inicio if isinstance(fecha_hora_inicio, datetime) else parsear_fecha_hora(fecha_hora_inicio)
+    fin = fecha_hora_fin if isinstance(fecha_hora_fin, datetime) else parsear_fecha_hora(fecha_hora_fin)
 
-    if excluir_id is not None:
-        sql += ' AND id != :excluir_id'
-        params['excluir_id'] = excluir_id
+    return len(_reservas_superpuestas(id_cancha, inicio, fin, excluir_id)) > 0
 
-    sql += ' LIMIT 1'
 
-    filas = ejecutar_consulta(sql, params)
-    return len(filas) > 0
+# ---------------------------------------------------------------
+# Stub de bloqueos: la rama main no implementa bloqueos.
+# ---------------------------------------------------------------
 
+def existe_bloqueo_superpuesto_para_reserva(id_cancha: int, fecha_hora_inicio, fecha_hora_fin, excluir_id=None) -> bool:
+    return False

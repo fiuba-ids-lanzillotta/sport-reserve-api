@@ -1,0 +1,5 @@
+ID, NOMBRE, ID_DEPORTE, PRECIO_HORA, TECHADA, ACTIVA
+1, Cancha 1 - Fútbol 5, 1, 1000000, true, true
+2, Cancha 2 - Fútbol 5 techada, 1, 1200000, true, true
+3, Cancha 3 - Básquet, 2, 800000, false, true
+4, Cancha 4 - Tenis, 3, 600000, false, true
