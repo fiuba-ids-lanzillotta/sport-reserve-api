@@ -49,13 +49,6 @@ def _verificar_disponibilidad(id_cancha: int, inicio: datetime, fin: datetime, e
             description='El intervalo se superpone con una reserva existente'
         ), 409)
 
-    if db.existe_bloqueo_superpuesto_para_reserva(id_cancha, inicio, fin):
-        raise ValueError(construir_error_api(
-            code=ERROR_CODE_RESERVA_CONFLICT,
-            message='La cancha no está disponible en el horario solicitado',
-            description='El intervalo se superpone con un bloqueo de mantenimiento'
-        ), 409)
-
 
 def listar_reservas(params: dict) -> tuple[list[dict], int]:
     filas, total = db.obtener_todas_las_reservas(

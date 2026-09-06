@@ -17,8 +17,9 @@ La solución deberá permitir:
 - Consultar la disponibilidad de canchas en un intervalo de tiempo.
 - Crear, consultar y modificar socios del club.
 - Crear, listar, consultar y cambiar el estado de reservas.
-- (Extensión opcional) Gestionar bloqueos de mantenimiento y reservas recurrentes.
 - Implementar paginación en los listados.
+
+Esta rama contiene la implementación base, sin extensiones opcionales.
 
 ---
 
@@ -73,17 +74,6 @@ La solución deberá permitir:
 | precio_hora       | int     | Tarifa histórica (centavos)              |
 | precio_total      | int     | Importe total calculado (centavos)       |
 
-### Entidad: Bloqueo (extensión)
-
-| Campo       | Tipo   | Descripción            |
-|-------------|--------|------------------------|
-| id          | int    | Identificador único    |
-| id_cancha   | int    | FK → Cancha            |
-| fecha       | date   | Día del bloqueo        |
-| hora_inicio | time   | Hora de inicio         |
-| hora_fin    | time   | Hora de fin            |
-| motivo      | string | Motivo del bloqueo     |
-
 ---
 
 ## 4. API a implementar
@@ -95,11 +85,6 @@ La solución deberá permitir:
 - `GET /canchas/disponibles`
 - `GET /socios`, `POST /socios`, `GET /socios/{id}`, `PATCH /socios/{id}`
 - `GET /reservas`, `POST /reservas`, `GET /reservas/{id}`, `PUT /reservas/{id}/estado`
-
-### Endpoints de extensión
-
-- `GET /bloqueos`, `POST /bloqueos`, `DELETE /bloqueos/{id}`
-- `POST /reservas/recurrentes`
 
 ---
 

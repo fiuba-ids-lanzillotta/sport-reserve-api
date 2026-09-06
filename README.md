@@ -2,6 +2,8 @@
 
 API de reservas de canchas de club deportivo construida con Flask.
 
+Esta rama (`feature/db_implementation`) contiene la versión con persistencia en MySQL, sin las extensiones opcionales de bloqueos ni reservas recurrentes.
+
 ## 📋 Requerimientos de Software
 
 ### Linux / macOS
@@ -137,15 +139,6 @@ Una vez ejecutada la aplicación:
 | GET    | `/sport_reserve_api/reservas/{id}` | Obtener una reserva por ID |
 | PUT    | `/sport_reserve_api/reservas/{id}/estado` | Cambiar el estado de una reserva |
 
-### Extensiones
-
-| Método | URL | Descripción |
-|--------|-----|-------------|
-| GET    | `/sport_reserve_api/bloqueos` | Listar bloqueos de mantenimiento |
-| POST   | `/sport_reserve_api/bloqueos` | Crear un bloqueo |
-| DELETE | `/sport_reserve_api/bloqueos/{id}` | Eliminar un bloqueo |
-| POST   | `/sport_reserve_api/reservas/recurrentes` | Crear reservas recurrentes |
-
 ## 📦 Dependencias
 
 - **Flask 2.3.2** - Framework web
@@ -176,22 +169,16 @@ sport-reserve-api/
 │   │   ├── deportes.py
 │   │   ├── canchas.py
 │   │   ├── socios.py
-│   │   ├── reservas.py
-│   │   ├── bloqueos.py
-│   │   └── recurrentes.py
+│   │   └── reservas.py
 │   ├── services/
 │   │   ├── deportes.py
 │   │   ├── canchas.py
 │   │   ├── socios.py
-│   │   ├── reservas.py
-│   │   ├── bloqueos.py
-│   │   └── recurrentes.py
+│   │   └── reservas.py
 │   └── validators/
 │       ├── canchas.py
 │       ├── socios.py
-│       ├── reservas.py
-│       ├── bloqueos.py
-│       └── recurrentes.py
+│       └── reservas.py
 ├── docs/
 │   ├── swagger.yaml
 │   └── enunciado.md

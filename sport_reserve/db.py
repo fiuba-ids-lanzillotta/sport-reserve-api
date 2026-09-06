@@ -155,19 +155,9 @@ def obtener_canchas_disponibles(fecha: str, hora_inicio: str, hora_fin: str, id_
                 AND r.fecha_hora_inicio < :fecha_hora_fin
                 AND r.fecha_hora_fin > :fecha_hora_inicio
           )
-          AND NOT EXISTS (
-              SELECT 1 FROM bloqueos b
-              WHERE b.id_cancha = c.id
-                AND b.fecha = :fecha
-                AND b.hora_inicio < :hora_fin
-                AND b.hora_fin > :hora_inicio
-          )
     """
 
     parametros_total = {
-        'fecha': fecha,
-        'hora_inicio': hora_inicio,
-        'hora_fin': hora_fin,
         'fecha_hora_inicio': f'{fecha} {hora_inicio}',
         'fecha_hora_fin': f'{fecha} {hora_fin}'
     }
@@ -188,13 +178,6 @@ def obtener_canchas_disponibles(fecha: str, hora_inicio: str, hora_fin: str, id_
                 AND r.estado != 'cancelada'
                 AND r.fecha_hora_inicio < :fecha_hora_fin
                 AND r.fecha_hora_fin > :fecha_hora_inicio
-          )
-          AND NOT EXISTS (
-              SELECT 1 FROM bloqueos b
-              WHERE b.id_cancha = c.id
-                AND b.fecha = :fecha
-                AND b.hora_inicio < :hora_fin
-                AND b.hora_fin > :hora_inicio
           )
         ORDER BY c.id
         LIMIT :limit OFFSET :offset
@@ -390,116 +373,3 @@ def existe_reserva_superpuesta(id_cancha: int, fecha_hora_inicio, fecha_hora_fin
     filas = ejecutar_consulta(sql, params)
     return len(filas) > 0
 
-
-# ---------------------------------------------------------------
-# Queries de bloqueos
-# ---------------------------------------------------------------
-
-def _where_bloqueos(id_cancha, fecha):
-    where = []
-    params = {}
-
-    if id_cancha is not None:
-        where.append('id_cancha = :id_cancha')
-        params['id_cancha'] = id_cancha
-
-    if fecha is not None:
-        where.append('fecha = :fecha')
-        params['fecha'] = fecha
-
-    return where, params
-
-
-def obtener_bloqueos(id_cancha=None, fecha=None, limit=10, offset=0) -> tuple[list[dict], int]:
-    where, params = _where_bloqueos(id_cancha, fecha)
-    sql_where = 'WHERE ' + ' AND '.join(where) if where else ''
-
-    sql_total = f'SELECT COUNT(*) AS total FROM bloqueos {sql_where}'
-    total = ejecutar_consulta(sql_total, params)[0]['total']
-
-    sql = f'SELECT id, id_cancha, fecha, hora_inicio, hora_fin, motivo FROM bloqueos {sql_where} ORDER BY id LIMIT :limit OFFSET :offset'
-    params['limit'] = limit
-    params['offset'] = offset
-
-    filas = ejecutar_consulta(sql, params)
-    return filas, total
-
-
-def obtener_bloqueo_por_id(id_bloqueo: int) -> dict:
-    filas = ejecutar_consulta('SELECT id, id_cancha, fecha, hora_inicio, hora_fin, motivo FROM bloqueos WHERE id = :id', {'id': id_bloqueo})
-    return filas[0] if filas else {}
-
-
-def insertar_bloqueo(id_cancha: int, fecha: str, hora_inicio: str, hora_fin: str, motivo: str) -> int:
-    sql = """
-        INSERT INTO bloqueos (id_cancha, fecha, hora_inicio, hora_fin, motivo)
-        VALUES (:id_cancha, :fecha, :hora_inicio, :hora_fin, :motivo)
-    """
-    return ejecutar_mutacion(sql, {
-        'id_cancha': id_cancha,
-        'fecha': fecha,
-        'hora_inicio': hora_inicio,
-        'hora_fin': hora_fin,
-        'motivo': motivo
-    })
-
-
-def eliminar_bloqueo(id_bloqueo: int) -> bool:
-    filas = ejecutar_consulta('SELECT id FROM bloqueos WHERE id = :id', {'id': id_bloqueo})
-
-    if not filas:
-        return False
-
-    ejecutar_mutacion('DELETE FROM bloqueos WHERE id = :id', {'id': id_bloqueo})
-    return True
-
-
-def existe_bloqueo_superpuesto(id_cancha: int, fecha: str, hora_inicio: str, hora_fin: str, excluir_id=None) -> bool:
-    sql = """
-        SELECT 1 FROM bloqueos
-        WHERE id_cancha = :id_cancha
-          AND fecha = :fecha
-          AND hora_inicio < :hora_fin
-          AND hora_fin > :hora_inicio
-    """
-    params = {
-        'id_cancha': id_cancha,
-        'fecha': fecha,
-        'hora_inicio': hora_inicio,
-        'hora_fin': hora_fin
-    }
-
-    if excluir_id is not None:
-        sql += ' AND id != :excluir_id'
-        params['excluir_id'] = excluir_id
-
-    sql += ' LIMIT 1'
-
-    filas = ejecutar_consulta(sql, params)
-    return len(filas) > 0
-
-
-def existe_bloqueo_superpuesto_para_reserva(id_cancha: int, fecha_hora_inicio, fecha_hora_fin, excluir_id=None) -> bool:
-    """Verifica si existe un bloqueo que se superponga con un intervalo de reserva."""
-    sql = """
-        SELECT 1 FROM bloqueos
-        WHERE id_cancha = :id_cancha
-          AND fecha = :fecha
-          AND hora_inicio < :hora_fin
-          AND hora_fin > :hora_inicio
-    """
-    params = {
-        'id_cancha': id_cancha,
-        'fecha': fecha_hora_inicio.date().isoformat(),
-        'hora_inicio': fecha_hora_inicio.strftime('%H:%M:%S'),
-        'hora_fin': fecha_hora_fin.strftime('%H:%M:%S')
-    }
-
-    if excluir_id is not None:
-        sql += ' AND id != :excluir_id'
-        params['excluir_id'] = excluir_id
-
-    sql += ' LIMIT 1'
-
-    filas = ejecutar_consulta(sql, params)
-    return len(filas) > 0

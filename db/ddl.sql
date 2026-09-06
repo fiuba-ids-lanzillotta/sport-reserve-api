@@ -69,18 +69,3 @@ CREATE TABLE IF NOT EXISTS reservas (
     FOREIGN KEY (id_cancha) REFERENCES canchas(id)
 );
 
--- -------------------------------------------------------------
--- Tabla: bloqueos
--- Bloqueos de mantenimiento (extensión opcional)
--- -------------------------------------------------------------
-CREATE TABLE IF NOT EXISTS bloqueos (
-    id          INT          NOT NULL AUTO_INCREMENT,
-    id_cancha   INT          NOT NULL,
-    fecha       DATE         NOT NULL,
-    hora_inicio TIME         NOT NULL,
-    hora_fin    TIME         NOT NULL,
-    motivo      VARCHAR(255) NOT NULL,
-
-    PRIMARY KEY (id),
-    FOREIGN KEY (id_cancha) REFERENCES canchas(id)
-);
