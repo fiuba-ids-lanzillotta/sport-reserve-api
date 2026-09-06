@@ -32,6 +32,14 @@ mysql -u root -p < db/ddl.sql
 mysql -u root -p < db/dml.sql
 ```
 
+### Levantar MySQL y la app con Docker Compose
+
+```bash
+docker-compose up -d
+```
+
+Esto levanta un contenedor MySQL con el esquema y datos iniciales, y un contenedor con la API Flask expuesta en `http://localhost:5000`.
+
 ### Configuración de conexión
 
 Por defecto la aplicación se conecta a una instancia local de MySQL:
@@ -94,6 +102,13 @@ python -m venv .venv
 .venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
+```
+
+## 🧪 Tests
+
+```bash
+pip install -r requirements-dev.txt
+pytest
 ```
 
 ## 🌐 Acceso a la API
