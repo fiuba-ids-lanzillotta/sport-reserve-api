@@ -17,6 +17,9 @@ def get_bloqueos():
 
     bloqueos, total = bloqueos_service.listar_bloqueos(params)
 
+    if total == 0:
+        return '', 204
+
     response = construir_respuesta_paginada(
         datos={'bloqueos': bloqueos},
         total=total,
@@ -41,12 +44,12 @@ def post_bloqueo():
         )), 400
 
     try:
-        bloqueo = bloqueos_service.crear_bloqueo(body)
+        bloqueos_service.crear_bloqueo(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
         return jsonify(e.args[0]), status
 
-    return jsonify(bloqueo), 201
+    return '', 201
 
 
 @bloqueos_bp.route('/bloqueos/<id>', methods=['DELETE'])

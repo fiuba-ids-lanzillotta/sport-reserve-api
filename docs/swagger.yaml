@@ -32,6 +32,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetDeportesList200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '500':
           $ref: '#/components/responses/InternalServerError'
 
@@ -54,6 +56,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetCanchasList200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -70,7 +74,7 @@ paths:
               $ref: '#/components/schemas/CanchaCreate'
       responses:
         '201':
-          $ref: '#/components/responses/CanchaCreated'
+          $ref: '#/components/responses/Created'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -103,8 +107,8 @@ paths:
             schema:
               $ref: '#/components/schemas/CanchaUpdate'
       responses:
-        '200':
-          $ref: '#/components/responses/GetCancha200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -147,6 +151,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetCanchasList200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -168,6 +174,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetSociosList200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -184,7 +192,7 @@ paths:
               $ref: '#/components/schemas/SocioCreate'
       responses:
         '201':
-          $ref: '#/components/responses/SocioCreated'
+          $ref: '#/components/responses/Created'
         '400':
           $ref: '#/components/responses/BadRequest'
         '409':
@@ -217,8 +225,8 @@ paths:
             schema:
               $ref: '#/components/schemas/SocioUpdate'
       responses:
-        '200':
-          $ref: '#/components/responses/GetSocio200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -247,6 +255,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetReservasList200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -267,7 +277,7 @@ paths:
               $ref: '#/components/schemas/ReservaCreate'
       responses:
         '201':
-          $ref: '#/components/responses/ReservaCreated'
+          $ref: '#/components/responses/Created'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -310,8 +320,8 @@ paths:
             schema:
               $ref: '#/components/schemas/EstadoReserva'
       responses:
-        '200':
-          $ref: '#/components/responses/GetReserva200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -335,6 +345,8 @@ paths:
       responses:
         '200':
           $ref: '#/components/responses/GetBloqueosList200'
+        '204':
+          $ref: '#/components/responses/NoContent'
         '400':
           $ref: '#/components/responses/BadRequest'
         '500':
@@ -354,7 +366,7 @@ paths:
               $ref: '#/components/schemas/BloqueoCreate'
       responses:
         '201':
-          $ref: '#/components/responses/BloqueoCreated'
+          $ref: '#/components/responses/Created'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -397,7 +409,7 @@ paths:
               $ref: '#/components/schemas/ReservaRecurrenteCreate'
       responses:
         '201':
-          $ref: '#/components/responses/ReservasRecurrentesCreated'
+          $ref: '#/components/responses/Created'
         '400':
           $ref: '#/components/responses/BadRequest'
         '404':
@@ -859,14 +871,6 @@ components:
         _links:
           $ref: '#/components/schemas/Links'
 
-    ReservasRecurrentesResponse:
-      type: object
-      properties:
-        reservas:
-          type: array
-          items:
-            $ref: '#/components/schemas/Reserva'
-
   parameters:
     Id:
       name: id
@@ -1045,13 +1049,6 @@ components:
           schema:
             $ref: '#/components/schemas/Cancha'
 
-    CanchaCreated:
-      description: Created
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Cancha'
-
     GetSociosList200:
       description: OK
       content:
@@ -1061,13 +1058,6 @@ components:
 
     GetSocio200:
       description: OK
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Socio'
-
-    SocioCreated:
-      description: Created
       content:
         application/json:
           schema:
@@ -1087,13 +1077,6 @@ components:
           schema:
             $ref: '#/components/schemas/Reserva'
 
-    ReservaCreated:
-      description: Created
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Reserva'
-
     GetBloqueosList200:
       description: OK
       content:
@@ -1101,19 +1084,8 @@ components:
           schema:
             $ref: '#/components/schemas/BloqueosListResponse'
 
-    BloqueoCreated:
-      description: Created
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/Bloqueo'
-
-    ReservasRecurrentesCreated:
-      description: Created
-      content:
-        application/json:
-          schema:
-            $ref: '#/components/schemas/ReservasRecurrentesResponse'
+    Created:
+      description: Creado
 
     ReservasRecurrentesConflict:
       description: Conflicto en la serie de reservas

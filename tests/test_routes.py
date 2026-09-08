@@ -93,7 +93,7 @@ def test_post_cancha_ok(client, monkeypatch):
     })
 
     assert respuesta.status_code == 201
-    assert respuesta.get_json()['id'] == 5
+    assert respuesta.data == b''
 
 
 def test_post_cancha_deporte_no_encontrado(client, monkeypatch):
@@ -133,8 +133,8 @@ def test_patch_cancha(client, monkeypatch):
 
     respuesta = client.patch(f'{BASE_URL}/canchas/1', json={'nombre': 'Cancha B'})
 
-    assert respuesta.status_code == 200
-    assert respuesta.get_json()['nombre'] == 'Cancha B'
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
 
 
 def test_delete_cancha(client, monkeypatch):
@@ -181,7 +181,7 @@ def test_post_socio_ok(client, monkeypatch):
     })
 
     assert respuesta.status_code == 201
-    assert respuesta.get_json()['id'] == 3
+    assert respuesta.data == b''
 
 
 def test_post_socio_duplicado(client, monkeypatch):
@@ -213,8 +213,8 @@ def test_patch_socio(client, monkeypatch):
 
     respuesta = client.patch(f'{BASE_URL}/socios/1', json={'nombre': 'Nuevo'})
 
-    assert respuesta.status_code == 200
-    assert respuesta.get_json()['nombre'] == 'Nuevo'
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
 
 
 # --- reservas ---
@@ -244,7 +244,7 @@ def test_post_reserva_ok(client, monkeypatch):
     })
 
     assert respuesta.status_code == 201
-    assert respuesta.get_json()['id'] == 10
+    assert respuesta.data == b''
 
 
 def test_post_reserva_conflict(client, monkeypatch):
@@ -295,8 +295,8 @@ def test_put_estado_reserva_cancelar(client, monkeypatch):
 
     respuesta = client.put(f'{BASE_URL}/reservas/10/estado', json={'estado': 'cancelada'})
 
-    assert respuesta.status_code == 200
-    assert respuesta.get_json()['estado'] == 'cancelada'
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
 
 
 # --- bloqueos ---
@@ -326,7 +326,7 @@ def test_post_bloqueo_ok(client, monkeypatch):
     })
 
     assert respuesta.status_code == 201
-    assert respuesta.get_json()['id'] == 5
+    assert respuesta.data == b''
 
 
 def test_delete_bloqueo(client, monkeypatch):
@@ -356,4 +356,62 @@ def test_post_reservas_recurrentes(client, monkeypatch):
     })
 
     assert respuesta.status_code == 201
-    assert len(respuesta.get_json()['reservas']) == 2
+    assert respuesta.data == b''
+
+
+# --- listados vacios ---
+
+def test_get_deportes_vacio(client, monkeypatch):
+    monkeypatch.setattr(db, 'obtener_todos_los_deportes', lambda: [])
+
+    respuesta = client.get(f'{BASE_URL}/deportes')
+
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
+
+
+def test_get_canchas_vacio(client, monkeypatch):
+    monkeypatch.setattr(db, 'obtener_canchas', lambda **kwargs: ([], 0))
+
+    respuesta = client.get(f'{BASE_URL}/canchas')
+
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
+
+
+def test_get_canchas_disponibles_vacio(client, monkeypatch):
+    monkeypatch.setattr(db, 'obtener_canchas_disponibles', lambda **kwargs: ([], 0))
+
+    respuesta = client.get(
+        f'{BASE_URL}/canchas/disponibles?fecha=2026-08-17&hora_inicio=10:00:00&hora_fin=12:00:00'
+    )
+
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
+
+
+def test_get_socios_vacio(client, monkeypatch):
+    monkeypatch.setattr(db, 'obtener_todos_los_socios', lambda **kwargs: ([], 0))
+
+    respuesta = client.get(f'{BASE_URL}/socios')
+
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
+
+
+def test_get_reservas_vacio(client, monkeypatch):
+    monkeypatch.setattr(db, 'obtener_todas_las_reservas', lambda **kwargs: ([], 0))
+
+    respuesta = client.get(f'{BASE_URL}/reservas')
+
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
+
+
+def test_get_bloqueos_vacio(client, monkeypatch):
+    monkeypatch.setattr(db, 'obtener_bloqueos', lambda **kwargs: ([], 0))
+
+    respuesta = client.get(f'{BASE_URL}/bloqueos')
+
+    assert respuesta.status_code == 204
+    assert respuesta.data == b''
