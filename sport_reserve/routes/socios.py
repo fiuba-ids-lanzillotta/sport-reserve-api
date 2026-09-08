@@ -17,6 +17,9 @@ def get_socios():
 
     socios, total = socios_service.listar_socios(params)
 
+    if total == 0:
+        return '', 204
+
     response = construir_respuesta_paginada(
         datos={'socios': socios},
         total=total,
@@ -41,12 +44,12 @@ def post_socio():
         )), 400
 
     try:
-        socio = socios_service.crear_socio(body)
+        socios_service.crear_socio(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
         return jsonify(e.args[0]), status
 
-    return jsonify(socio), 201
+    return '', 201
 
 
 @socios_bp.route('/socios/<id>', methods=['GET'])
@@ -85,9 +88,9 @@ def patch_socio(id):
         )), 400
 
     try:
-        socio = socios_service.actualizar_socio_parcial(id_socio, body)
+        socios_service.actualizar_socio_parcial(id_socio, body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
         return jsonify(e.args[0]), status
 
-    return jsonify(socio)
+    return '', 204

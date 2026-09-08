@@ -17,6 +17,9 @@ def get_reservas():
 
     reservas, total = reservas_service.listar_reservas(params)
 
+    if total == 0:
+        return '', 204
+
     response = construir_respuesta_paginada(
         datos={'reservas': reservas},
         total=total,
@@ -41,12 +44,12 @@ def post_reserva():
         )), 400
 
     try:
-        reserva = reservas_service.crear_reserva(body)
+        reservas_service.crear_reserva(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
         return jsonify(e.args[0]), status
 
-    return jsonify(reserva), 201
+    return '', 201
 
 
 @reservas_bp.route('/reservas/<id>', methods=['GET'])
@@ -85,9 +88,9 @@ def put_estado_reserva(id):
         )), 400
 
     try:
-        reserva = reservas_service.cambiar_estado_reserva(id_reserva, body)
+        reservas_service.cambiar_estado_reserva(id_reserva, body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
         return jsonify(e.args[0]), status
 
-    return jsonify(reserva)
+    return '', 204
