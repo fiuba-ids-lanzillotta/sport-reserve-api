@@ -17,6 +17,9 @@ def get_canchas():
 
     canchas, total = canchas_service.listar_canchas(params)
 
+    if total == 0:
+        return '', 204
+
     response = construir_respuesta_paginada(
         datos={'canchas': canchas},
         total=total,
@@ -41,12 +44,12 @@ def post_cancha():
         )), 400
 
     try:
-        cancha = canchas_service.crear_cancha(body)
+        canchas_service.crear_cancha(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
         return jsonify(e.args[0]), status
 
-    return jsonify(cancha), 201
+    return '', 201
 
 
 @canchas_bp.route('/canchas/<id>', methods=['GET'])
@@ -85,12 +88,12 @@ def patch_cancha(id):
         )), 400
 
     try:
-        cancha = canchas_service.actualizar_cancha_parcial(id_cancha, body)
+        canchas_service.actualizar_cancha_parcial(id_cancha, body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
         return jsonify(e.args[0]), status
 
-    return jsonify(cancha)
+    return '', 204
 
 
 @canchas_bp.route('/canchas/<id>', methods=['DELETE'])
@@ -117,6 +120,9 @@ def get_canchas_disponibles():
         return jsonify(e.args[0]), 400
 
     canchas, total = canchas_service.listar_canchas_disponibles(params)
+
+    if total == 0:
+        return '', 204
 
     response = construir_respuesta_paginada(
         datos={'canchas': canchas},
