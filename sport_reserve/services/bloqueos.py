@@ -71,6 +71,7 @@ def crear_bloqueo(body: dict) -> dict:
     )
 
     bloqueo = db.obtener_bloqueo_por_id(nuevo_id)
+
     return construir_bloqueo_dto(bloqueo)
 
 

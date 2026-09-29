@@ -14,6 +14,7 @@ def ejecutar_consulta(sql: str, parametros: dict = None) -> list[dict]:
     """Ejecuta una SELECT y devuelve todas las filas como lista de dicts."""
     with motor.connect() as conexion:
         resultado = conexion.execute(text(sql), parametros or {})
+
         return [fila_a_dict(fila) for fila in resultado]
 
 
@@ -24,6 +25,7 @@ def ejecutar_mutacion(sql: str, parametros: dict = None) -> int:
     """
     with motor.begin() as conexion:
         resultado = conexion.execute(text(sql), parametros or {})
+
         return resultado.lastrowid or 0
 
 
@@ -37,6 +39,7 @@ def obtener_todos_los_deportes() -> list[dict]:
 
 def obtener_deporte_por_id(id_deporte: int) -> dict:
     filas = ejecutar_consulta('SELECT id, nombre FROM deportes WHERE id = :id', {'id': id_deporte})
+
     return filas[0] if filas else {}
 
 
@@ -79,6 +82,7 @@ def obtener_canchas(id_deporte=None, nombre=None, techada=None, activa=None, lim
     params['offset'] = offset
 
     filas = ejecutar_consulta(sql, params)
+
     return filas, total
 
 
@@ -87,6 +91,7 @@ def obtener_cancha_por_id(id_cancha: int) -> dict:
         'SELECT id, nombre, id_deporte, precio_hora, techada, activa FROM canchas WHERE id = :id',
         {'id': id_cancha}
     )
+
     return filas[0] if filas else {}
 
 
@@ -121,12 +126,14 @@ def eliminar_cancha(id_cancha: int) -> bool:
         return False
 
     ejecutar_mutacion('DELETE FROM canchas WHERE id = :id', {'id': id_cancha})
+
     return True
 
 
 def contar_reservas_por_cancha(id_cancha: int) -> int:
     sql = 'SELECT COUNT(*) AS total FROM reservas WHERE id_cancha = :id_cancha'
     filas = ejecutar_consulta(sql, {'id_cancha': id_cancha})
+
     return filas[0]['total']
 
 
@@ -171,8 +178,10 @@ def obtener_canchas_disponibles(fecha: str, hora_inicio: str, hora_fin: str, id_
         'fecha_hora_inicio': f'{fecha} {hora_inicio}',
         'fecha_hora_fin': f'{fecha} {hora_fin}'
     }
+
     if id_deporte is not None:
         parametros_total['id_deporte'] = id_deporte
+
     if techada is not None:
         parametros_total['techada'] = 1 if techada else 0
 
@@ -206,6 +215,7 @@ def obtener_canchas_disponibles(fecha: str, hora_inicio: str, hora_fin: str, id_
     params['fecha_hora_fin'] = f'{fecha} {hora_fin}'
 
     filas = ejecutar_consulta(sql, params)
+
     return filas, total
 
 
@@ -240,22 +250,26 @@ def obtener_todos_los_socios(nombre=None, activo=None, limit=10, offset=0) -> tu
     params['offset'] = offset
 
     filas = ejecutar_consulta(sql, params)
+
     return filas, total
 
 
 def obtener_socio_por_id(id_socio: int) -> dict:
     filas = ejecutar_consulta('SELECT id, nombre, email, activo FROM socios WHERE id = :id', {'id': id_socio})
+
     return filas[0] if filas else {}
 
 
 def existe_socio_distinto(email: str, excluir_id: int) -> bool:
     sql = 'SELECT id FROM socios WHERE email = :email AND id != :excluir_id LIMIT 1'
     filas = ejecutar_consulta(sql, {'email': email, 'excluir_id': excluir_id})
+
     return len(filas) > 0
 
 
 def insertar_socio(nombre: str, email: str) -> int:
     sql = 'INSERT INTO socios (nombre, email) VALUES (:nombre, :email)'
+
     return ejecutar_mutacion(sql, {'nombre': nombre, 'email': email})
 
 
@@ -318,6 +332,7 @@ def obtener_todas_las_reservas(id_cancha=None, id_socio=None, estado=None, fecha
     params['offset'] = offset
 
     filas = ejecutar_consulta(sql, params)
+
     return filas, total
 
 
@@ -326,6 +341,7 @@ def obtener_reserva_por_id(id_reserva: int) -> dict:
         'SELECT id, id_socio, id_cancha, fecha_hora_inicio, fecha_hora_fin, estado, precio_hora, precio_total FROM reservas WHERE id = :id',
         {'id': id_reserva}
     )
+
     return filas[0] if filas else {}
 
 
@@ -388,6 +404,7 @@ def existe_reserva_superpuesta(id_cancha: int, fecha_hora_inicio, fecha_hora_fin
     sql += ' LIMIT 1'
 
     filas = ejecutar_consulta(sql, params)
+
     return len(filas) > 0
 
 
@@ -422,11 +439,13 @@ def obtener_bloqueos(id_cancha=None, fecha=None, limit=10, offset=0) -> tuple[li
     params['offset'] = offset
 
     filas = ejecutar_consulta(sql, params)
+
     return filas, total
 
 
 def obtener_bloqueo_por_id(id_bloqueo: int) -> dict:
     filas = ejecutar_consulta('SELECT id, id_cancha, fecha, hora_inicio, hora_fin, motivo FROM bloqueos WHERE id = :id', {'id': id_bloqueo})
+
     return filas[0] if filas else {}
 
 
@@ -451,6 +470,7 @@ def eliminar_bloqueo(id_bloqueo: int) -> bool:
         return False
 
     ejecutar_mutacion('DELETE FROM bloqueos WHERE id = :id', {'id': id_bloqueo})
+
     return True
 
 
@@ -476,6 +496,7 @@ def existe_bloqueo_superpuesto(id_cancha: int, fecha: str, hora_inicio: str, hor
     sql += ' LIMIT 1'
 
     filas = ejecutar_consulta(sql, params)
+
     return len(filas) > 0
 
 
@@ -502,4 +523,5 @@ def existe_bloqueo_superpuesto_para_reserva(id_cancha: int, fecha_hora_inicio, f
     sql += ' LIMIT 1'
 
     filas = ejecutar_consulta(sql, params)
+
     return len(filas) > 0

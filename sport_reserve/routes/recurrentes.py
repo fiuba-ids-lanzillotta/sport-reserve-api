@@ -21,6 +21,7 @@ def post_reservas_recurrentes():
         recurrentes_service.crear_reservas_recurrentes(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 201

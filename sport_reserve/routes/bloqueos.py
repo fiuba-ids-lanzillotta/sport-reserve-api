@@ -47,6 +47,7 @@ def post_bloqueo():
         bloqueos_service.crear_bloqueo(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 201
@@ -63,6 +64,7 @@ def delete_bloqueo(id):
         bloqueos_service.eliminar_bloqueo(id_bloqueo)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 204

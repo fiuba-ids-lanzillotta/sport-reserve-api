@@ -54,12 +54,14 @@ def construir_links_paginacion(offset, limit, total, base_url, params):
 
     # Link al bloque siguiente (solo si hay más elementos)
     offset_siguiente = offset + limit
+
     if offset_siguiente < total:
         rel, link = construir_link("SIGUIENTE", offset_siguiente, limit, base_url, params)
         links[rel] = link
 
     # Link al último bloque (solo si no estamos ya en él)
     offset_ultimo = 0 if total == 0 else ((total - 1) // limit) * limit
+
     if offset < offset_ultimo:
         rel, link = construir_link("ULTIMO", offset_ultimo, limit, base_url, params)
         links[rel] = link

@@ -22,6 +22,7 @@ from .. import db
 
 def _calcular_precio_total(precio_hora: int, inicio: datetime, fin: datetime) -> int:
     horas = (fin - inicio).total_seconds() / 3600
+
     return int(precio_hora * horas)
 
 

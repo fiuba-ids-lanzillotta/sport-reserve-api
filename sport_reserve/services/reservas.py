@@ -38,6 +38,7 @@ def construir_reserva_dto(reserva: dict) -> dict:
 
 def _calcular_precio_total(precio_hora: int, inicio: datetime, fin: datetime) -> int:
     horas = (fin - inicio).total_seconds() / 3600
+
     return int(precio_hora * horas)
 
 
@@ -132,6 +133,7 @@ def crear_reserva(body: dict) -> dict:
     )
 
     reserva = db.obtener_reserva_por_id(nuevo_id)
+
     return construir_reserva_dto(reserva)
 
 
@@ -214,4 +216,5 @@ def cambiar_estado_reserva(id_reserva: int, body: dict) -> dict:
 
     db.actualizar_estado_reserva(id_reserva, nuevo_estado)
     reserva = db.obtener_reserva_por_id(id_reserva)
+
     return construir_reserva_dto(reserva)

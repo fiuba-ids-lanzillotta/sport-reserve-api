@@ -47,6 +47,7 @@ def post_cancha():
         canchas_service.crear_cancha(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 201
@@ -91,6 +92,7 @@ def patch_cancha(id):
         canchas_service.actualizar_cancha_parcial(id_cancha, body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 204
@@ -107,6 +109,7 @@ def delete_cancha(id):
         canchas_service.eliminar_cancha(id_cancha)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 204

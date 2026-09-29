@@ -39,6 +39,7 @@ def leer_archivo(ruta: str) -> list[str]:
             return archivo.read().splitlines()
     except IOError:
         logger.error(f"No se pudo leer el archivo: '{ruta}'")
+
         return []
 
 
@@ -169,6 +170,7 @@ def parsear_fecha_hora(cadena: str, nombre: str = 'fecha_hora') -> datetime:
 
     try:
         dt = datetime.fromisoformat(cadena)
+
         return dt.replace(tzinfo=None)
     except ValueError:
         raise ValueError(construir_error_api(
@@ -250,6 +252,7 @@ def validar_booleano(valor, nombre: str = 'booleano') -> bool:
     if isinstance(valor, str):
         if valor.lower() == 'true':
             return True
+
         if valor.lower() == 'false':
             return False
 
@@ -262,6 +265,7 @@ def validar_booleano(valor, nombre: str = 'booleano') -> bool:
 
 def validar_id(id_str: str) -> int:
     id_entero = validar_entero(id_str, 'id')
+
     return validar_minimo(id_entero, MIN_ID, 'id')
 
 
