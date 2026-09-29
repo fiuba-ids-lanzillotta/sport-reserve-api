@@ -1,8 +1,16 @@
+from flask import Flask, current_app
 from sqlalchemy import create_engine, text
 from .constants import DB_URL
 
-# Motor de conexión compartido por toda la aplicación.
-motor = create_engine(DB_URL, pool_pre_ping=True)
+
+def init_app(app: Flask) -> None:
+    """Crea el engine de conexión y lo guarda en la aplicación."""
+    app.extensions['motor'] = create_engine(DB_URL, pool_pre_ping=True)
+
+
+def _motor():
+    """Retorna el engine de la aplicación actual."""
+    return current_app.extensions['motor']
 
 
 def fila_a_dict(fila) -> dict:
@@ -12,7 +20,7 @@ def fila_a_dict(fila) -> dict:
 
 def ejecutar_consulta(sql: str, parametros: dict = None) -> list[dict]:
     """Ejecuta una SELECT y devuelve todas las filas como lista de dicts."""
-    with motor.connect() as conexion:
+    with _motor().connect() as conexion:
         resultado = conexion.execute(text(sql), parametros or {})
 
         return [fila_a_dict(fila) for fila in resultado]
@@ -23,7 +31,7 @@ def ejecutar_mutacion(sql: str, parametros: dict = None) -> int:
     Ejecuta un INSERT, UPDATE o DELETE y hace commit.
     Retorna el id generado en caso de INSERT, o 0 en otro caso.
     """
-    with motor.begin() as conexion:
+    with _motor().begin() as conexion:
         resultado = conexion.execute(text(sql), parametros or {})
 
         return resultado.lastrowid or 0
@@ -370,7 +378,7 @@ def insertar_reservas_batch(reservas: list[dict]) -> list[int]:
 
     ids = []
 
-    with motor.begin() as conexion:
+    with _motor().begin() as conexion:
         for reserva in reservas:
             resultado = conexion.execute(text(sql), reserva)
             ids.append(resultado.lastrowid or 0)
