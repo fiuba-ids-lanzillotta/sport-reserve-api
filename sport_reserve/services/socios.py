@@ -42,6 +42,7 @@ def crear_socio(body: dict) -> dict:
 
     nuevo_id = db.insertar_socio(datos['nombre'], datos['email'])
     socio = db.obtener_socio_por_id(nuevo_id)
+
     return construir_socio_dto(socio)
 
 
@@ -85,4 +86,5 @@ def actualizar_socio_parcial(id_socio: int, body: dict) -> dict:
     db.actualizar_socio_parcial(id_socio, campos)
 
     socio = db.obtener_socio_por_id(id_socio)
+
     return construir_socio_dto(socio)

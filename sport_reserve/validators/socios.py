@@ -38,11 +38,13 @@ def validar_params_socios(args: dict) -> dict:
 
 def _validar_email(email: str) -> bool:
     patron_email = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+
     return re.match(patron_email, email) is not None
 
 
 def _validar_nombre(nombre: str) -> bool:
     patron_nombre = r'^[A-Za-zÀ-ÿ]+(?: [A-Za-zÀ-ÿ]+)*$'
+
     return re.match(patron_nombre, nombre) is not None
 
 

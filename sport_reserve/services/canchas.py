@@ -56,6 +56,7 @@ def crear_cancha(body: dict) -> dict:
     )
 
     cancha = db.obtener_cancha_por_id(nuevo_id)
+
     return construir_cancha_dto(cancha)
 
 
@@ -97,6 +98,7 @@ def actualizar_cancha_parcial(id_cancha: int, body: dict) -> dict:
     db.actualizar_cancha_parcial(id_cancha, campos)
 
     cancha = db.obtener_cancha_por_id(id_cancha)
+
     return construir_cancha_dto(cancha)
 
 

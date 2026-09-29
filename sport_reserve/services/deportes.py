@@ -10,4 +10,5 @@ def construir_deporte_dto(deporte: dict) -> dict:
 
 def listar_deportes() -> list[dict]:
     deportes = db.obtener_todos_los_deportes()
+
     return [construir_deporte_dto(d) for d in deportes]
