@@ -47,6 +47,7 @@ def post_reserva():
         reservas_service.crear_reserva(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 201
@@ -91,6 +92,7 @@ def put_estado_reserva(id):
         reservas_service.cambiar_estado_reserva(id_reserva, body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 204

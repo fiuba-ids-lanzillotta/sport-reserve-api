@@ -47,6 +47,7 @@ def post_socio():
         socios_service.crear_socio(body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 201
@@ -91,6 +92,7 @@ def patch_socio(id):
         socios_service.actualizar_socio_parcial(id_socio, body)
     except ValueError as e:
         status = e.args[1] if len(e.args) > 1 else 400
+
         return jsonify(e.args[0]), status
 
     return '', 204

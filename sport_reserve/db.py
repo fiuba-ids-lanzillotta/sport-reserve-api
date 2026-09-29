@@ -26,6 +26,7 @@ def _normalizar_booleano_campos(campos: dict, columnas_booleanas: set) -> dict:
     for columna in columnas_booleanas:
         if columna in normalizado:
             valor = normalizado[columna]
+
             if isinstance(valor, bool):
                 normalizado[columna] = valor
             elif isinstance(valor, int):
@@ -39,6 +40,7 @@ def _normalizar_booleano_campos(campos: dict, columnas_booleanas: set) -> dict:
 def _nuevo_id(registros: list[dict]) -> int:
     if not registros:
         return 1
+
     return max(r['id'] for r in registros) + 1
 
 
@@ -88,6 +90,7 @@ def obtener_canchas(id_deporte=None, nombre=None, techada=None, activa=None, lim
     ]
 
     total = len(filtradas)
+
     return filtradas[offset:offset + limit], total
 
 
@@ -115,6 +118,7 @@ def insertar_cancha(nombre: str, id_deporte: int, precio_hora: int, techada: boo
     })
 
     guardar_csv(ARCHIVO_CANCHAS, canchas, ENCABEZADOS_CANCHAS)
+
     return nuevo_id
 
 
@@ -139,11 +143,13 @@ def eliminar_cancha(id_cancha: int) -> bool:
         return False
 
     guardar_csv(ARCHIVO_CANCHAS, canchas, ENCABEZADOS_CANCHAS)
+
     return True
 
 
 def contar_reservas_por_cancha(id_cancha: int) -> int:
     reservas = cargar_csv(ARCHIVO_RESERVAS)
+
     return len([r for r in reservas if r['id_cancha'] == id_cancha])
 
 
@@ -191,6 +197,7 @@ def obtener_canchas_disponibles(fecha: str, hora_inicio: str, hora_fin: str, id_
             disponibles.append(cancha)
 
     total = len(disponibles)
+
     return disponibles[offset:offset + limit], total
 
 
@@ -216,6 +223,7 @@ def obtener_todos_los_socios(nombre=None, activo=None, limit=10, offset=0) -> tu
     ]
 
     total = len(filtrados)
+
     return filtrados[offset:offset + limit], total
 
 
@@ -251,6 +259,7 @@ def insertar_socio(nombre: str, email: str) -> int:
     })
 
     guardar_csv(ARCHIVO_SOCIOS, socios, ENCABEZADOS_SOCIOS)
+
     return nuevo_id
 
 
@@ -300,6 +309,7 @@ def obtener_todas_las_reservas(id_cancha=None, id_socio=None, estado=None, fecha
     ]
 
     total = len(filtradas)
+
     return filtradas[offset:offset + limit], total
 
 
@@ -329,6 +339,7 @@ def insertar_reserva(id_socio: int, id_cancha: int, fecha_hora_inicio, fecha_hor
     })
 
     guardar_csv(ARCHIVO_RESERVAS, reservas, ENCABEZADOS_RESERVAS)
+
     return nuevo_id
 
 
