@@ -32,7 +32,7 @@ DB_PASSWORD = os.environ.get('DB_PASSWORD', '')
 DB_NAME = os.environ.get('DB_NAME', 'sport_reserve')
 DB_URL = os.environ.get(
     'DB_URL',
-    f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}'
+    f'mysql+pymysql://{DB_USER}:{DB_PASSWORD}@{DB_HOST}:{DB_PORT}/{DB_NAME}?charset=utf8mb4'
 )
 
 # Códigos de error

@@ -2,7 +2,7 @@ from sqlalchemy import create_engine, text
 from .constants import DB_URL
 
 # Motor de conexión compartido por toda la aplicación.
-motor = create_engine(DB_URL)
+motor = create_engine(DB_URL, pool_pre_ping=True)
 
 
 def fila_a_dict(fila) -> dict:
