@@ -1,5 +1,10 @@
 import os
 
+from dotenv import load_dotenv
+
+# Carga variables de entorno desde .env si existe (no pisa las ya definidas)
+load_dotenv()
+
 FORMATO_FECHA = '%Y-%m-%d'
 FORMATO_HORA = '%H:%M:%S'
 
